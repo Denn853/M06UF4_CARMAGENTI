@@ -1,5 +1,8 @@
 let player_num = 0;
 
+let player1_data = {};
+let player2_data = {};
+
 const socket = new WebSocket("ws://10.40.2.23:8080");
 
 socket.addEventListener("open", function(event) {
@@ -13,6 +16,14 @@ socket.addEventListener("message", function(event) {
     if (data.player_num != undefined) {
         player_num = data.player_num;
         console.log("Player number: ", player_num)
+    }
+
+    else if (data.x != undefined) {
+        player2_data = {
+            x: data.x,
+            y: data.y,
+            r: data.rotation
+        }
     }
 
 });
@@ -73,48 +84,98 @@ function create ()
 
 function update ()
 {
-    /// MOVEMENT
-    // UP - DOWN
-    if (keys.up.isDown || cursors.up.isDown)
-    {
-        player1.y -= CAR_SPEED*Math.cos(player1_angle*Math.PI/180);
-        player1.x += CAR_SPEED*Math.sin(player1_angle*Math.PI/180);
+    // PLAYER 1 - MOVEMENT
+    if (player_num === 1) {
+        // UP - DOWN
+        if (keys.up.isDown || cursors.up.isDown)
+        {
+            player1.y -= CAR_SPEED*Math.cos(player1_angle*Math.PI/180);
+            player1.x += CAR_SPEED*Math.sin(player1_angle*Math.PI/180);
 
-        /// ROTATION 
-        // LEFT - RIGHT
-        if (keys.left.isDown || cursors.left.isDown) 
-        {
-            player1_angle -= CAR_ROTATION;
+            /// ROTATION 
+            // LEFT - RIGHT
+            if (keys.left.isDown || cursors.left.isDown) 
+            {
+                player1_angle -= CAR_ROTATION;
+            }
+            else if (keys.right.isDown || cursors.right.isDown)
+            {
+                player1_angle += CAR_ROTATION;
+            }
         }
-        else if (keys.right.isDown || cursors.right.isDown)
+        else if (keys.down.isDown || cursors.down.isDown)
         {
-            player1_angle += CAR_ROTATION;
+            player1.y += CAR_SPEED/2*Math.cos(player1_angle*Math.PI/180);
+            player1.x -= CAR_SPEED/2*Math.sin(player1_angle*Math.PI/180);
+        
+            /// ROTATION 
+            // LEFT - RIGHT
+            if (keys.left.isDown || cursors.left.isDown) 
+            {
+                player1_angle -= CAR_ROTATION/2;
+            }
+            else if (keys.right.isDown || cursors.right.isDown)
+            {
+                player1_angle += CAR_ROTATION/2;
+            }
         }
+        
+        player1.rotation = player1_angle*Math.PI/180;
+
+        player1_data = {
+            x: player1.x,
+            y: player1.y,
+            r: player1.rotation
+        };
+
+        socket.send(JSON.stringify(player1_data));
     }
-    else if (keys.down.isDown || cursors.down.isDown)
-    {
-        player1.y += CAR_SPEED/2*Math.cos(player1_angle*Math.PI/180);
-        player1.x -= CAR_SPEED/2*Math.sin(player1_angle*Math.PI/180);
-    
-        /// ROTATION 
-        // LEFT - RIGHT
-        if (keys.left.isDown || cursors.left.isDown) 
+
+    // PLAYER 2 - MOVEMENT
+    if (player_num === 2) {
+
+        // UP - DOWN
+        if (keys.up.isDown || cursors.up.isDown)
         {
-            player1_angle -= CAR_ROTATION/2;
+            player2.y -= CAR_SPEED*Math.cos(player2_angle*Math.PI/180);
+            player2.x += CAR_SPEED*Math.sin(player2_angle*Math.PI/180);
+
+            /// ROTATION 
+            // LEFT - RIGHT
+            if (keys.left.isDown || cursors.left.isDown) 
+            {
+                player2_angle -= CAR_ROTATION;
+            }
+            else if (keys.right.isDown || cursors.right.isDown)
+            {
+                player2_angle += CAR_ROTATION;
+            }
         }
-        else if (keys.right.isDown || cursors.right.isDown)
+        else if (keys.down.isDown || cursors.down.isDown)
         {
-            player1_angle += CAR_ROTATION/2;
+            player2.y += CAR_SPEED/2*Math.cos(player2_angle*Math.PI/180);
+            player2.x -= CAR_SPEED/2*Math.sin(player2_angle*Math.PI/180);
+        
+            /// ROTATION 
+            // LEFT - RIGHT
+            if (keys.left.isDown || cursors.left.isDown) 
+            {
+                player2_angle -= CAR_ROTATION/2;
+            }
+            else if (keys.right.isDown || cursors.right.isDown)
+            {
+                player2_angle += CAR_ROTATION/2;
+            }
         }
+        
+        player2.rotation = player2_angle*Math.PI/180;
+
+        player2_data = {
+            x: player2.x,
+            y: player2.y,
+            r: player2.rotation
+        };
+
+        socket.send(JSON.stringify(player2_data));
     }
-    
-    player1.rotation = player1_angle*Math.PI/180;
-
-    var player_data = {
-        x: player1.x,
-        y: player1.y,
-        r: player1.rotation
-    };
-
-    socket.send(JSON.stringify(player_data));
 }

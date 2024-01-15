@@ -24,7 +24,7 @@ wsServer.on('connection', function (conn) {
         
         player1_conn = conn;
 
-        player1_conn.send('{"player_num":1}');
+        player1_conn.send('{"player_num": 1}');
 
         player1_conn.on('message', function(data) {
             //player2_conn.send(data);
@@ -35,10 +35,11 @@ wsServer.on('connection', function (conn) {
         
         player2_conn = conn;
         
-        player2_conn.send('{"player_num":2}');
+        player2_conn.send('{"player_num": 2}');
        
         player2_conn.on('message', function(data) {
             player1_conn.send(data);
+            console.log(data.toString());
         });
     }
 
