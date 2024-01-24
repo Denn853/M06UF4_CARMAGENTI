@@ -27,7 +27,12 @@ wsServer.on('connection', function (conn) {
         player1_conn.send('{"player_num": 1}');
 
         player1_conn.on('message', function(data) {
-            //player2_conn.send(data);
+            if (player2_conn == undefined) {
+                return;
+            }
+
+            player2_conn.send(data.toString());
+
             console.log(data.toString());
         });
     }
@@ -38,7 +43,12 @@ wsServer.on('connection', function (conn) {
         player2_conn.send('{"player_num": 2}');
        
         player2_conn.on('message', function(data) {
-            player1_conn.send(data);
+            if (player1_conn == undefined) {
+                return;
+            }
+
+            player1_conn.send(data.toString());
+            
             console.log(data.toString());
         });
     }
