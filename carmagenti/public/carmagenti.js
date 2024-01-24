@@ -1,12 +1,24 @@
 let player_num = 0;
 
+// CAR CONSTS
+const CAR_SPEED = 5;
+const CAR_ROTATION = 5;
+
 // PLAYER VARIABLES
 let player1;
 let player2;
 
+let player1_angle = 0;
+let player2_angle = 0;
+
 // BULLET VARIABLES
 let bullet1;
 let bullet2;
+
+// INPUTS
+let cursors
+let keys
+
 
 const socket = new WebSocket("ws://10.40.2.23:8080");
 
@@ -35,6 +47,18 @@ socket.addEventListener("message", function(event) {
             player2.rotation = data.r
         }
     }
+    else if (data.bx != undefined) {
+        if (player_num == 2) {
+            bullet1.x = data.bx,
+            bullet1.y = data.by,
+            bullet1.rotation = data.br
+        }
+        else if (player_num == 1) {
+            bullet2.x = data.bx,
+            bullet2.y = data.by,
+            bullet2.rotation = data.br
+        }
+    }
 });
 
 const config = {
@@ -49,18 +73,6 @@ const config = {
 }
 
 const game = new Phaser.Game(config);
-
-// CAR CONSTS
-const CAR_SPEED = 5;
-const CAR_ROTATION = 5;
-
-let player1_angle = 0;
-let player2_angle = 0;
-
-// INPUTS
-let cursors
-let keys
-
 
 function preload ()
 {
