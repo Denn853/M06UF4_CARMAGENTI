@@ -4,6 +4,9 @@ let player_num = 0;
 const CAR_SPEED = 5;
 const CAR_ROTATION = 5;
 
+// BULLET CONSTS
+const BULLET_SPEED = 4;
+
 // PLAYER VARIABLES
 let player1;
 let player2;
@@ -14,6 +17,8 @@ let player2_angle = 0;
 // BULLET VARIABLES
 let bullet1;
 let bullet2;
+
+let canShot = true;
 
 // INPUTS
 let cursors
@@ -49,11 +54,26 @@ socket.addEventListener("message", function(event) {
     }
     else if (data.bx != undefined) {
         if (player_num == 2) {
+            
+            if (bullet1 == undefined) {
+                
+                bullet1 = canvas.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
+
+                bullet1.setScale(0.25);
+            }
+            
             bullet1.x = data.bx,
             bullet1.y = data.by,
             bullet1.rotation = data.br
         }
         else if (player_num == 1) {
+            if (bullet2 == undefined) {
+                
+                bullet2 = canvas.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
+
+                bullet2.setScale(0.25);
+            }
+
             bullet2.x = data.bx,
             bullet2.y = data.by,
             bullet2.rotation = data.br
@@ -74,8 +94,12 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+let canvas;
+
 function preload ()
 {
+    canvas = this;
+
     this.load.image('green_car', 'assets/PNG/Cars/car_green_small_1.png');
     this.load.image('blue_car', 'assets/PNG/Cars/car_blue_small_1.png');
     this.load.image('circuit', 'assets/PNG/circuit.png');
@@ -150,10 +174,12 @@ function update ()
             }
         }
 
-        if (keys.space.isDown) 
+        if (keys.space.isDown && canShot) 
         {
-            bullet1 = this.add.image(player1.x, player1.y - 50, 'duck_white');
+            bullet1 = this.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
             bullet1.setScale(0.25);
+            bullet1.rotation = player1_angle * Math.PI / 180;
+            canShot = false;
         }
         
         player1.rotation = player1_angle*Math.PI/180;
@@ -165,6 +191,21 @@ function update ()
         };
 
         socket.send(JSON.stringify(player1_data));
+
+        if (bullet1 == undefined) {
+            return;
+        }
+
+        bullet1.y -= BULLET_SPEED * Math.cos(bullet1.rotation);
+        bullet1.x += BULLET_SPEED * Math.sin(bullet1.rotation);
+
+        let bullet1_data = {
+            bx: bullet1.x,
+            by: bullet1.y,
+            br: bullet1.rotation
+        }
+    
+        socket.send(JSON.stringify(bullet1_data));
     }
     else {
         // UP - DOWN
@@ -201,10 +242,12 @@ function update ()
             }
         }
         
-        if (keys.space.isDown) 
+        if (keys.space.isDown && canShot) 
         {
-            bullet2 = this.add.image(player2.x, player2.y - 50, 'duck_yellow');
+            bullet2 = this.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
             bullet2.setScale(0.25);
+            bullet2.rotation = player2_angle * Math.PI / 180;
+            canShot = false;
         }
 
         player2.rotation = player2_angle*Math.PI/180;
@@ -216,5 +259,20 @@ function update ()
         };
 
         socket.send(JSON.stringify(player2_data));
+
+        if (bullet2 == undefined) {
+            return;
+        }
+    
+        bullet2.y -= BULLET_SPEED * Math.cos(bullet2.rotation);
+        bullet2.x += BULLET_SPEED * Math.sin(bullet2.rotation);
+    
+        let bullet2_data = {
+            bx: bullet2.x,
+            by: bullet2.y,
+            br: bullet2.rotation
+        }
+    
+        socket.send(JSON.stringify(bullet2_data));
     }
 }
