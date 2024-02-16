@@ -24,7 +24,6 @@ let canShot = true;
 let cursors
 let keys
 
-
 const socket = new WebSocket("ws://10.40.2.23:8080");
 
 socket.addEventListener("open", function(event) {
@@ -32,7 +31,7 @@ socket.addEventListener("open", function(event) {
 });
 
 socket.addEventListener("message", function(event) {
-    console.log("Server: ", event.data);
+    //console.log("Server: ", event.data);
 
     let data = JSON.parse(event.data);
 
@@ -41,12 +40,12 @@ socket.addEventListener("message", function(event) {
         console.log("Player number: ", player_num)
     }
     else if (data.x != undefined) {
-        if (player_num == 2) {
+        if (player_num == 2 && player1 != undefined) {
             player1.x = data.x,
             player1.y = data.y,
             player1.rotation = data.r
         }
-        else if (player_num == 1) {
+        else if (player_num == 1 && player2 != undefined) {
             player2.x = data.x,
             player2.y = data.y,
             player2.rotation = data.r
@@ -60,8 +59,19 @@ socket.addEventListener("message", function(event) {
                 bullet1 = canvas.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
 
                 bullet1.setScale(0.25);
+
+                canvas.physics.add.collider(player2, bullet1, () => {
+                    console.log("Hit with Player 2");
+
+                    let bullet1_collision_data = {
+                        collided: 2
+                    }
+                
+                    socket.send(JSON.stringify(bullet1_collision_data));
+                });
+                canvas.physics.add.existing(bullet1, false);
             }
-            
+
             bullet1.x = data.bx,
             bullet1.y = data.by,
             bullet1.rotation = data.br
@@ -72,11 +82,32 @@ socket.addEventListener("message", function(event) {
                 bullet2 = canvas.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
 
                 bullet2.setScale(0.25);
+
+                canvas.physics.add.collider(player1, bullet2, () => {
+                    console.log("Hit with Player 1");
+
+                    let bullet2_collision_data = {
+                        collided: 1
+                    }
+                
+                    socket.send(JSON.stringify(bullet2_collision_data));
+                });
+                canvas.physics.add.existing(bullet2, false);
             }
 
             bullet2.x = data.bx,
             bullet2.y = data.by,
             bullet2.rotation = data.br
+        }
+    }
+    if (data.game_over != undefined) {
+        bg_text.setVisible(true);
+
+        if (data.game_over == player_num) {
+            lose_text.setVisible(true);
+        }
+        else {
+            won_text.setVisible(true);
         }
     }
 });
@@ -85,6 +116,12 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: true
+        }
+    },
     scene: {
         preload,
         create,
@@ -95,6 +132,9 @@ const config = {
 const game = new Phaser.Game(config);
 
 let canvas;
+let bg_text;
+let won_text;
+let lose_text;
 
 function preload ()
 {
@@ -112,11 +152,16 @@ function create ()
     this.add.image(400, 300, 'circuit').setDisplaySize(808, 610).setDepth(-1);
 
     /// PLAYER
-    player1 = this.add.image(31, 300, 'green_car');
-    player2 = this.add.image(84, 320, 'blue_car');
+    player1 = this.physics.add.image(31, 300, 'green_car');
+    player2 = this.physics.add.image(84, 320, 'blue_car');
     
     player1.setScale(0.5);
     player2.setScale(0.5);
+
+    player1.setCollideWorldBounds(true);
+    player2.setCollideWorldBounds(true);
+
+    this.physics.add.collider(player1, player2)
 
     /// INPUTS
         // WASD
@@ -130,6 +175,13 @@ function create ()
 
         // ARROWS
     cursors = this.input.keyboard.createCursorKeys();
+
+    // UI
+    bg_text = canvas.add.rectangle(0, 0, config.width*2, config.height*2, 0x000000).setVisible(false);
+
+    lose_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU LOSE', {fontFamily: 'Arial', fontSize: 64, color: '#ff0000'}).setVisible(false);
+    
+    won_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU WON', {fontFamily: 'Arial', fontSize: 64, color: '#00ff00'}).setVisible(false);
 }
 
 function update ()
@@ -176,10 +228,23 @@ function update ()
 
         if (keys.space.isDown && canShot) 
         {
-            bullet1 = this.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
+            bullet1 = this.physics.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
             bullet1.setScale(0.25);
             bullet1.rotation = player1_angle * Math.PI / 180;
             canShot = false;
+            
+            // Colisión con los bordes del mundo
+            bullet1.setCollideWorldBounds(true);
+
+            // // Agregar manejador de eventos de colisión
+            // this.physics.world.on('worldbounds', function (body) {
+            //     // Verificar si la colisión involucra la bala
+            //     if (body.gameObject === bullet1) {
+            //         // Eliminar la bala cuando colisiona con los bordes del mundo
+            //         bullet1.destroy();
+            //         canShot = true;
+            //     }
+            // });
         }
         
         player1.rotation = player1_angle*Math.PI/180;
@@ -244,10 +309,22 @@ function update ()
         
         if (keys.space.isDown && canShot) 
         {
-            bullet2 = this.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
+            bullet2 = this.physics.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
             bullet2.setScale(0.25);
             bullet2.rotation = player2_angle * Math.PI / 180;
             canShot = false;
+            
+            // Colisión con los bordes del mundo
+            bullet2.setCollideWorldBounds(true);
+
+            // // Agregar manejador de eventos de colisión
+            // this.physics.world.on('worldbounds', function (body) {
+            //     // Verificar si la colisión involucra la bala
+            //     if (body.gameObject === bullet2) {
+            //         // Desactivar y ocultar la bala cuando colisiona con los bordes del mundo
+            //         bullet2.setActive(false).setVisible(false);
+            //     }
+            // });
         }
 
         player2.rotation = player2_angle*Math.PI/180;

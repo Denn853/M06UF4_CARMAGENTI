@@ -31,9 +31,23 @@ wsServer.on('connection', function (conn) {
                 return;
             }
 
-            player2_conn.send(data.toString());
+            //console.log(data.toString());
 
-            console.log(data.toString());
+            let message_data = JSON.parse(data);
+            if (message_data.collided != undefined) {
+
+                let game_over_data = {
+                    game_over: message_data.collided
+                }
+                let go = JSON.stringify(game_over_data);
+                
+                console.log("colision 1", go );
+                player1_conn.send(JSON.stringify(game_over_data));
+                player2_conn.send(JSON.stringify(game_over_data));
+            }
+            else {
+                player2_conn.send(data.toString());
+            }
         });
     }
     else if (player2_conn == undefined) {
@@ -45,11 +59,25 @@ wsServer.on('connection', function (conn) {
         player2_conn.on('message', function(data) {
             if (player1_conn == undefined) {
                 return;
-            }
-
-            player1_conn.send(data.toString());
+            }  
             
-            console.log(data.toString());
+            //console.log(data.toString());
+
+            let message_data = JSON.parse(data);
+            if (message_data.collided != undefined) {
+
+                let game_over_data = {
+                    game_over: message_data.collided
+                };
+                let go = JSON.stringify(game_over_data);
+
+                console.log("colision 2", go );
+                player1_conn.send(go);
+                player2_conn.send(go);
+            }
+            else {
+                player1_conn.send(data.toString());
+            }
         });
     }
 
