@@ -53,7 +53,6 @@ socket.addEventListener("message", function(event) {
     }
     else if (data.bx != undefined) {
         if (player_num == 2) {
-            
             if (bullet1 == undefined) {
                 
                 bullet1 = canvas.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
@@ -153,8 +152,8 @@ function create ()
     this.add.image(400, 300, 'circuit').setDisplaySize(808, 610).setDepth(-1);
 
     /// PLAYER
-    player1 = this.physics.add.image(31, 300, 'green_car');
-    player2 = this.physics.add.image(84, 320, 'blue_car');
+    player1 = this.physics.add.image(31, 300, 'green_car').setRotation(Phaser.Math.DegToRad(90));
+    player2 = this.physics.add.image(84, 320, 'blue_car').setRotation(Phaser.Math.DegToRad(90));
     
     player1.setScale(0.5);
     player2.setScale(0.5);
