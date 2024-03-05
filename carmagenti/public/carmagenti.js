@@ -101,13 +101,13 @@ socket.addEventListener("message", function(event) {
         }
     }
     if (data.game_over != undefined) {
-        bg_text.setVisible(true);
+        bg_text = canvas.add.rectangle(0, 0, config.width*2, config.height*2, 0x000000).setVisible(true);
 
         if (data.game_over == player_num) {
-            lose_text.setVisible(true);
+            lose_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU LOSE', {fontFamily: 'Arial', fontSize: 64, color: '#ff0000'}).setVisible(true);
         }
         else {
-            won_text.setVisible(true);
+            won_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU WON', {fontFamily: 'Arial', fontSize: 64, color: '#00ff00'}).setVisible(true);
         }
     }
 });
@@ -149,6 +149,7 @@ function preload ()
 
 function create ()
 {    
+    // CIRCUIT
     this.add.image(400, 300, 'circuit').setDisplaySize(808, 610).setDepth(-1);
 
     /// PLAYER
@@ -175,13 +176,6 @@ function create ()
 
         // ARROWS
     cursors = this.input.keyboard.createCursorKeys();
-
-    // UI
-    bg_text = canvas.add.rectangle(0, 0, config.width*2, config.height*2, 0x000000).setVisible(false);
-
-    lose_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU LOSE', {fontFamily: 'Arial', fontSize: 64, color: '#ff0000'}).setVisible(false);
-    
-    won_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU WON', {fontFamily: 'Arial', fontSize: 64, color: '#00ff00'}).setVisible(false);
 }
 
 function update ()
