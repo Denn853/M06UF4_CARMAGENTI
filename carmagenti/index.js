@@ -36,14 +36,12 @@ wsServer.on('connection', function (conn) {
             let message_data = JSON.parse(data);
             if (message_data.collided != undefined) {
 
-                let game_over_data = {
-                    game_over: message_data.collided
-                }
-                let go = JSON.stringify(game_over_data);
+                let game_over_data = { game_over: message_data.collided }
+                let game_over = JSON.stringify(game_over_data);
                 
-                console.log("colision 1", go );
-                player1_conn.send(JSON.stringify(game_over_data));
-                player2_conn.send(JSON.stringify(game_over_data));
+                console.log("colision 1", game_over );
+                player1_conn.send(game_over);
+                player2_conn.send(game_over);
             }
             else {
                 player2_conn.send(data.toString());
@@ -66,22 +64,16 @@ wsServer.on('connection', function (conn) {
             let message_data = JSON.parse(data);
             if (message_data.collided != undefined) {
 
-                let game_over_data = {
-                    game_over: message_data.collided
-                };
-                let go = JSON.stringify(game_over_data);
+                let game_over_data = { game_over: message_data.collided };
+                let game_over = JSON.stringify(game_over_data);
 
-                console.log("colision 2", go );
-                player1_conn.send(go);
-                player2_conn.send(go);
+                console.log("colision 2", game_over );
+                player1_conn.send(game_over);
+                player2_conn.send(game_over);
             }
             else {
                 player1_conn.send(data.toString());
             }
         });
     }
-
-    // conn.on('message', function(data) {
-    //     console.log(data.toString());
-    // });
 });

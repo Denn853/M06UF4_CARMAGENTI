@@ -1,11 +1,12 @@
 let player_num = 0;
 
 // CAR CONSTS
-const CAR_SPEED = 5;
-const CAR_ROTATION = 5;
+const CAR_SPEED = 2;
+const CAR_ROTATION = 2;
 
 // BULLET CONSTS
-const BULLET_SPEED = 4;
+const BULLET_SPEED = 2;
+const BULLET_SHOT_TIMER = 1000; // 1 segundo
 
 // PLAYER VARIABLES
 let player1;
@@ -19,12 +20,19 @@ let bullet1;
 let bullet2;
 
 let canShot = true;
+let shotTimer = 0;
 
 // INPUTS
 let cursors
 let keys
 
-const socket = new WebSocket("ws://10.40.2.23:8080");
+// UI
+let canvas;
+let bg_text;
+let won_text;
+let lose_text;
+
+const socket = new WebSocket("ws://192.168.1.19:8080");
 
 socket.addEventListener("open", function(event) {
 
@@ -117,9 +125,7 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: {
-            debug: true
-        }
+        
     },
     scene: {
         preload,
@@ -129,11 +135,6 @@ const config = {
 }
 
 const game = new Phaser.Game(config);
-
-let canvas;
-let bg_text;
-let won_text;
-let lose_text;
 
 function preload ()
 {
@@ -152,8 +153,8 @@ function create ()
     this.add.image(400, 300, 'circuit').setDisplaySize(808, 610).setDepth(-1);
 
     /// PLAYER
-    player1 = this.physics.add.image(31, 300, 'green_car').setRotation(Phaser.Math.DegToRad(90));
-    player2 = this.physics.add.image(84, 320, 'blue_car').setRotation(Phaser.Math.DegToRad(90));
+    player1 = this.physics.add.image(31, 300, 'green_car');
+    player2 = this.physics.add.image(84, 320, 'blue_car');
     
     player1.setScale(0.5);
     player2.setScale(0.5);
@@ -182,6 +183,9 @@ function update ()
     if (player_num == 0) {
         return;
     }
+
+    // Incrementar el temporizador de disparo en cada fotograma
+    shotTimer += canvas.time.deltaTime;
 
     // PLAYER 1 - MOVEMENT
     if (player_num == 1) {
@@ -225,19 +229,12 @@ function update ()
             bullet1.setScale(0.25);
             bullet1.rotation = player1_angle * Math.PI / 180;
             canShot = false;
+
+            // Reiniciar el temporizador de disparo
+            shotTimer = 0;
             
             // Colisión con los bordes del mundo
-            bullet1.setCollideWorldBounds(true);
-
-            // // Agregar manejador de eventos de colisión
-            // this.physics.world.on('worldbounds', function (body) {
-            //     // Verificar si la colisión involucra la bala
-            //     if (body.gameObject === bullet1) {
-            //         // Eliminar la bala cuando colisiona con los bordes del mundo
-            //         bullet1.destroy();
-            //         canShot = true;
-            //     }
-            // });
+            //bullet1.setCollideWorldBounds(true);
         }
         
         player1.rotation = player1_angle*Math.PI/180;
@@ -306,18 +303,12 @@ function update ()
             bullet2.setScale(0.25);
             bullet2.rotation = player2_angle * Math.PI / 180;
             canShot = false;
-            
-            // Colisión con los bordes del mundo
-            bullet2.setCollideWorldBounds(true);
+        
+            // Reiniciar el temporizador de disparo
+            shotTimer = 0;
 
-            // // Agregar manejador de eventos de colisión
-            // this.physics.world.on('worldbounds', function (body) {
-            //     // Verificar si la colisión involucra la bala
-            //     if (body.gameObject === bullet2) {
-            //         // Desactivar y ocultar la bala cuando colisiona con los bordes del mundo
-            //         bullet2.setActive(false).setVisible(false);
-            //     }
-            // });
+            // Colisión con los bordes del mundo
+            //bullet2.setCollideWorldBounds(true);
         }
 
         player2.rotation = player2_angle*Math.PI/180;
