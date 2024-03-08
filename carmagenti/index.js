@@ -17,6 +17,9 @@ httpServer.listen(8080);
 let player1_conn;
 let player2_conn;
 
+let viewers = [];
+let users_conn = 3;
+
 wsServer.on('connection', function (conn) {
     console.log('EVENT: Connection');
 
@@ -31,6 +34,10 @@ wsServer.on('connection', function (conn) {
                 return;
             }
 
+            viewers.forEach(viewer => {
+                viewer.send(data.toString());
+            });
+            
             //console.log(data.toString());
 
             let message_data = JSON.parse(data);
@@ -42,6 +49,10 @@ wsServer.on('connection', function (conn) {
                 console.log("colision 1", game_over );
                 player1_conn.send(game_over);
                 player2_conn.send(game_over);
+
+                viewers.forEach(viewer => {
+                    viewer.send(game_over);
+                });
             }
             else {
                 player2_conn.send(data.toString());
@@ -59,6 +70,9 @@ wsServer.on('connection', function (conn) {
                 return;
             }  
             
+            viewers.forEach(viewer => {
+                viewer.send(data.toString());
+            });
             //console.log(data.toString());
 
             let message_data = JSON.parse(data);
@@ -70,10 +84,23 @@ wsServer.on('connection', function (conn) {
                 console.log("colision 2", game_over );
                 player1_conn.send(game_over);
                 player2_conn.send(game_over);
+
+                viewers.forEach(viewer => {
+                    viewer.send(game_over);
+                });
             }
             else {
                 player1_conn.send(data.toString());
             }
         });
+    }
+    else {
+        let data = `{"player_num": ${users_conn}}`;
+        conn.send(data);
+        
+        console.log(`Viewers Num: ${users_conn - 2}`);
+        
+        users_conn++;
+        viewers.push(conn);
     }
 });

@@ -28,9 +28,8 @@ let keys
 
 // UI
 let canvas;
-let bg_text;
-let won_text;
-let lose_text;
+let bg_game_over;
+let text_game_over;
 
 const socket = new WebSocket("ws://192.168.1.19:8080");
 
@@ -58,6 +57,19 @@ socket.addEventListener("message", function(event) {
             player2.y = data.y,
             player2.rotation = data.r
         }
+        else {
+            if (data.n == 1) {
+                player1.x = data.x,
+                player1.y = data.y,
+                player1.rotation = data.r
+            }
+            
+            if (data.n == 2) {
+                player2.x = data.x,
+                player2.y = data.y,
+                player2.rotation = data.r
+            }
+        }
     }
     else if (data.bx != undefined) {
         if (player_num == 2) {
@@ -69,6 +81,8 @@ socket.addEventListener("message", function(event) {
 
                 canvas.physics.add.collider(player2, bullet1, () => {
                     console.log("Hit with Player 2");
+
+                    bullet1.destroy(true, false);
 
                     let bullet1_collision_data = {
                         collided: 2
@@ -93,10 +107,12 @@ socket.addEventListener("message", function(event) {
                 canvas.physics.add.collider(player1, bullet2, () => {
                     console.log("Hit with Player 1");
 
+                    bullet2.destroy(true, false);
+
                     let bullet2_collision_data = {
                         collided: 1
                     }
-                
+
                     socket.send(JSON.stringify(bullet2_collision_data));
                 });
                 canvas.physics.add.existing(bullet2, false);
@@ -106,15 +122,47 @@ socket.addEventListener("message", function(event) {
             bullet2.y = data.by,
             bullet2.rotation = data.br
         }
+        else {
+            if (data.bn == 1) {
+                if (bullet1 == undefined) {
+                
+                    bullet1 = canvas.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
+    
+                    bullet1.setScale(0.25);
+                }
+    
+                bullet1.x = data.bx,
+                bullet1.y = data.by,
+                bullet1.rotation = data.br
+            }
+
+            if (data.bn == 2) {
+                if (bullet2 == undefined) {
+                
+                    bullet2 = canvas.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
+    
+                    bullet2.setScale(0.25);
+                }
+    
+                bullet2.x = data.bx,
+                bullet2.y = data.by,
+                bullet2.rotation = data.br
+            }
+        }
     }
     if (data.game_over != undefined) {
-        bg_text = canvas.add.rectangle(0, 0, config.width*2, config.height*2, 0x000000).setVisible(true);
+        bg_game_over = canvas.add.rectangle(0, 0, config.width*2, config.height*2, 0x000000).setVisible(true);
 
         if (data.game_over == player_num) {
-            lose_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU LOSE', {fontFamily: 'Arial', fontSize: 64, color: '#ff0000'}).setVisible(true);
+            text_game_over = canvas.add.text(config.width / 3.5, config.height / 2.25, 'YOU LOSE', {fontFamily: 'Comfortaa, sans-serif', fontSize: 64, color: '#F28EFA'}).setVisible(true);
+        }
+        else if (data.game_over != player_num && player_num <= 2) {
+            text_game_over = canvas.add.text(config.width / 3.5, config.height / 2.25, 'YOU WON', {fontFamily: 'Comfortaa, sans-serif', fontSize: 64, color: '#66FF8D'}).setVisible(true);
         }
         else {
-            won_text = canvas.add.text(config.width / 3.5, config.height / 2, 'YOU WON', {fontFamily: 'Arial', fontSize: 64, color: '#00ff00'}).setVisible(true);
+            let number;
+            data.game_over == 1 ? number = 2 : number = 1;
+            text_game_over = canvas.add.text(config.width / 4.75, config.height / 2.25, 'PLAYER ' + number + ' WON', {fontFamily: 'Comfortaa, sans-serif', fontSize: 64, color: '#8EEAFA'}).setVisible(true);
         }
     }
 });
@@ -125,7 +173,6 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        
     },
     scene: {
         preload,
@@ -225,7 +272,7 @@ function update ()
 
         if (keys.space.isDown && canShot) 
         {
-            bullet1 = this.physics.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), 'duck_white');
+            bullet1 = this.physics.add.image(player1.x + (2 * player1.width / 3) * Math.sin(player1_angle * Math.PI / 180), player1.y - (2 * player1.width / 3) * Math.cos(player1_angle * Math.PI / 180), 'duck_white');
             bullet1.setScale(0.25);
             bullet1.rotation = player1_angle * Math.PI / 180;
             canShot = false;
@@ -242,7 +289,8 @@ function update ()
         let player1_data = {
             x: player1.x,
             y: player1.y,
-            r: player1.rotation
+            r: player1.rotation,
+            n: 1
         };
 
         socket.send(JSON.stringify(player1_data));
@@ -257,12 +305,13 @@ function update ()
         let bullet1_data = {
             bx: bullet1.x,
             by: bullet1.y,
-            br: bullet1.rotation
+            br: bullet1.rotation,
+            bn: 1
         }
     
         socket.send(JSON.stringify(bullet1_data));
     }
-    else {
+    else if (player_num == 2){
         // UP - DOWN
         if (keys.up.isDown || cursors.up.isDown)
         {
@@ -299,7 +348,7 @@ function update ()
         
         if (keys.space.isDown && canShot) 
         {
-            bullet2 = this.physics.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), 'duck_yellow');
+            bullet2 = this.physics.add.image(player2.x + (2 * player2.width / 3) * Math.sin(player2_angle * Math.PI / 180), player2.y - (2 * player2.width / 3) * Math.cos(player2_angle * Math.PI / 180), 'duck_yellow');
             bullet2.setScale(0.25);
             bullet2.rotation = player2_angle * Math.PI / 180;
             canShot = false;
@@ -316,7 +365,8 @@ function update ()
         let player2_data = {
             x: player2.x,
             y: player2.y,
-            r: player2.rotation
+            r: player2.rotation,
+            n: 2
         };
 
         socket.send(JSON.stringify(player2_data));
@@ -331,7 +381,8 @@ function update ()
         let bullet2_data = {
             bx: bullet2.x,
             by: bullet2.y,
-            br: bullet2.rotation
+            br: bullet2.rotation,
+            bn: 2
         }
     
         socket.send(JSON.stringify(bullet2_data));
